@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAPUFE – Conciliación CLR-CCI</title>
+<style>
+:root{
+  --green:#006341;--green-dark:#004d31;--green-mid:#2e7d32;
+  --green-light:#e8f5e9;--green-pale:#f1f9f3;
+  --gold:#C8A84B;--blue-dark:#1F4E79;
+  --red:#c62828;--orange:#7B3F00;
+  --border:#d0ddd5;--bg:#f3f7f4;--white:#fff;
+  --text:#1a2a1f;--muted:#6b7c6e;
+  --shadow:0 3px 14px rgba(0,80,40,.11);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Header */
+header{background:var(--green);display:flex;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.20);position:sticky;top:0;z-index:100}
+.hdr-stripe{background:var(--gold);width:7px;align-self:stretch;flex-shrink:0}
+.hdr-inner{display:flex;align-items:center;gap:18px;padding:12px 24px;flex:1}
+.logo-box{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 14px;font-size:22px;font-weight:900;color:#fff;letter-spacing:3px}
+.logo-box span{color:var(--gold)}
+.hdr-div{width:1px;height:38px;background:rgba(255,255,255,.25)}
+.hdr-text h1{font-size:15px;font-weight:700;color:#fff}
+.hdr-text p{font-size:11px;color:rgba(255,255,255,.75);margin-top:2px}
+.hdr-ip{margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 14px;font-size:12px;color:#fff;font-weight:600}
+
+/* Main */
+main{max-width:960px;margin:34px auto;padding:0 20px 40px}
+
+/* Cards */
+.card{background:var(--white);border-radius:10px;border:1px solid var(--border);box-shadow:var(--shadow);padding:26px 30px;margin-bottom:22px}
+.card-title{font-size:15px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green-light);padding-bottom:10px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+
+/* Upload */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.upload-grid{grid-template-columns:1fr}}
+.upload-box{border:2px dashed var(--green);border-radius:8px;padding:22px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--green-pale);position:relative}
+.upload-box:hover,.upload-box.active{border-color:var(--green-mid);background:var(--green-light);transform:translateY(-2px);box-shadow:0 5px 16px rgba(0,100,50,.15)}
+.upload-box input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.upload-badge{display:inline-block;background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:20px;letter-spacing:1px;margin-bottom:10px}
+.upload-badge.cci{background:var(--blue-dark)}
+.upload-icon{font-size:38px;margin-bottom:8px}
+.upload-label{font-weight:700;font-size:14px;color:var(--green);margin-bottom:4px}
+.upload-hint{font-size:11px;color:var(--muted)}
+.upload-name{font-size:11px;font-weight:600;color:var(--green-mid);margin-top:10px;word-break:break-all;display:none}
+
+/* Info table */
+.info-table{width:100%;border-collapse:collapse;font-size:12px}
+.info-table th{background:var(--green);color:#fff;padding:8px 12px;text-align:left;font-weight:600}
+.info-table td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--muted)}
+.info-table tr:nth-child(even) td{background:var(--green-pale)}
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 7px;border-radius:8px;vertical-align:middle}
+.badge-calc{background:var(--orange);color:#fff}
+.badge-cci{background:var(--blue-dark);color:#fff}
+
+/* Button */
+.btn-submit{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-top:6px}
+.btn-submit:hover{background:var(--green-mid);box-shadow:0 4px 16px rgba(0,100,50,.28)}
+.btn-submit:disabled{background:#9e9e9e;cursor:not-allowed;box-shadow:none}
+
+/* Status */
+#status{margin-top:16px;display:none}
+.status-box{border-radius:8px;padding:13px 18px;font-size:13px;display:flex;align-items:center;gap:12px}
+.s-loading{background:#FFF8E1;border:1px solid #FFD54F;color:#5D4037}
+.s-ok{background:var(--green-light);border:1px solid #66BB6A;color:#1B5E20}
+.s-error{background:#FFEBEE;border:1px solid #EF9A9A;color:#B71C1C}
+.spinner{width:18px;height:18px;border:3px solid rgba(0,0,0,.15);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Net box */
+.net-box{background:#e3f2fd;border-left:4px solid #1565c0;border-radius:6px;padding:12px 16px;font-size:13px;color:#0d47a1;display:flex;align-items:center;gap:10px}
+
+footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;border-top:1px solid var(--border);margin-top:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-stripe"></div>
+  <div class="hdr-inner">
+    <div class="logo-box">CA<span>PUFE</span></div>
+    <div class="hdr-div"></div>
+    <div class="hdr-text">
+      <h1>Sistema de Conciliación Valles</h1>
+      <p>Secretaría de Infraestructura, Comunicaciones y Transportes</p>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Carga de archivos -->
+  <div class="card">
+    <div class="card-title">📂 Seleccionar Archivos CSV</div>
+    <form id="mainForm" method="POST" action="/process" enctype="multipart/form-data">
+      <div class="upload-grid">
+        <div>
+          <div class="upload-box" id="box-df">
+            <input type="file" name="df_file" accept=".csv" required
+                   onchange="onFile(this,'box-df','name-df')">
+            <div class="upload-badge">DF / CLR</div>
+            <div class="upload-icon">📋</div>
+            <div class="upload-label">Archivo Dictaminado CLR</div>
+            <div class="upload-hint">Formato CSV · Datos de Piso</div>
+            <div class="upload-name" id="name-df"></div>
+          </div>
+        </div>
+        <div>
+          <div class="upload-box" id="box-cci">
+            <input type="file" name="cci_file" accept=".csv" required
+                   onchange="onFile(this,'box-cci','name-cci')">
+            <div class="upload-badge cci">CCI</div>
+            <div class="upload-icon">📡</div>
+            <div class="upload-label">Archivo Dispersión CCI</div>
+            <div class="upload-hint">Formato CSV · Datos de Cobro</div>
+            <div class="upload-name" id="name-cci"></div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="btnSubmit">
+        ⚙️ &nbsp; Generar Conciliación Excel
+      </button>
+    </form>
+
+    <div id="status">
+      <div class="status-box s-loading" id="s-load">
+        <div class="spinner"></div>
+        <span>Procesando archivos, por favor espere…</span>
+      </div>
+      <div class="status-box s-ok"    id="s-ok"  style="display:none">
+        <span>✅</span><span id="ok-msg"></span>
+      </div>
+      <div class="status-box s-error" id="s-err" style="display:none">
+        <span>⚠️</span><span id="err-msg"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campos calculados -->
+  <div class="card">
+    <div class="card-title">🔢 Campos Calculados Automáticamente</div>
+    <table class="info-table">
+      <thead>
+        <tr><th>Parámetro</th><th>Tipo</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>CONVERSION_HORA</strong></td><td><span class="badge badge-calc">CALC</span></td><td>Hora Transacción (HHMMSS) → formato 24 h <strong>HH:MM:SS</strong></td></tr>
+        <tr><td><strong>INDICADOR_PISO</strong></td><td><span class="badge badge-calc">CALC</span></td><td>Número Tarjeta &amp; Evento &amp; CONVERSION_HORA (decimal)</td></tr>
+        <tr><td><strong>CLASE</strong></td><td><span class="badge badge-calc">CALC</span></td><td>Clase &amp; Tipo</td></tr>
+        <tr><td><strong>INDICADOR_TARIFA</strong></td><td><span class="badge badge-calc">CALC</span></td><td>Tramo &amp; CLASE</td></tr>
+        <tr><td><strong>IMPORTE_VALUADO</strong></td><td><span class="badge badge-calc">CALC</span></td><td>Tarifa según INDICADOR_TARIFA (tabla TARIFAS interna)</td></tr>
+        <tr><td><strong>VAL_TARJETA / VAL_EVENTO / VAL TRAMO / VAL_CARRIL</strong></td><td><span class="badge badge-calc">CALC</span></td><td>Comparaciones DF vs CCI — <span style="color:#006100;font-weight:700">VERDADERO</span> / <span style="color:#9C0006;font-weight:700">FALSO</span></td></tr>
+        <tr><td><strong>VAL_HORA</strong></td><td><span class="badge badge-calc">CALC</span></td><td>Diferencia CONVERSION_HORA − HORA (HH:MM:SS)</td></tr>
+        <tr><td><strong>DIFERENCIA</strong></td><td><span class="badge badge-calc">CALC</span></td><td>IMPORTE_VALUADO − IMPORTE_TOTAL &nbsp;<em style="color:#c62828">(negativo = rojo negritas)</em></td></tr>
+        <tr><td><strong>INDICADOR_CCI</strong></td><td><span class="badge badge-cci">CCI</span></td><td>NUMERO_TAG &amp; EVENTO &amp; HORA (decimal)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Red -->
+  <div class="card">
+    <div class="card-title">🌐 Acceso desde Otros Equipos</div>
+    <div class="net-box">
+      ℹ️ &nbsp;
+      Desde cualquier equipo en la misma red, abre un navegador y accede a:
+      &nbsp;<strong>http://{{ ip }}:5000</strong>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  CAPUFE – Caminos y Puentes Federales &nbsp;|&nbsp;
+  Sistema de Conciliación CLR-CCI &nbsp;|&nbsp; {{ year }}
+</footer>
+
+<script>
+function onFile(input, boxId, nameId) {
+  const box = document.getElementById(boxId);
+  const nm  = document.getElementById(nameId);
+  if (input.files.length) {
+    box.classList.add('active');
+    nm.textContent   = '✔ ' + input.files[0].name;
+    nm.style.display = 'block';
+  }
+}
+
+['box-df','box-cci'].forEach(id => {
+  const box = document.getElementById(id);
+  const nid = id === 'box-df' ? 'name-df' : 'name-cci';
+  box.addEventListener('dragover',  e => { e.preventDefault(); box.classList.add('active'); });
+  box.addEventListener('dragleave', () => box.classList.remove('active'));
+  box.addEventListener('drop', e => {
+    e.preventDefault();
+    const inp = box.querySelector('input[type=file]');
+    const dt  = new DataTransfer();
+    dt.items.add(e.dataTransfer.files[0]);
+    inp.files = dt.files;
+    onFile(inp, id, nid);
+  });
+});
+
+document.getElementById('mainForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn   = document.getElementById('btnSubmit');
+  const stat  = document.getElementById('status');
+  const sLoad = document.getElementById('s-load');
+  const sOk   = document.getElementById('s-ok');
+  const sErr  = document.getElementById('s-err');
+
+  btn.disabled = true; btn.textContent = 'Procesando…';
+  stat.style.display  = 'block';
+  sLoad.style.display = 'flex';
+  sOk.style.display   = 'none';
+  sErr.style.display  = 'none';
+
+  try {
+    const fd   = new FormData(e.target);
+    const resp = await fetch('/process', { method: 'POST', body: fd });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'Error desconocido' }));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    const blob  = await resp.blob();
+    const url   = URL.createObjectURL(blob);
+    const cd    = resp.headers.get('Content-Disposition') || '';
+    const fname = (cd.match(/filename="?([^";\n]+)"?/) || [])[1] || 'conciliacion.xlsx';
+    const a     = document.createElement('a');
+    a.href = url; a.download = fname; a.click();
+    URL.revokeObjectURL(url);
+    sLoad.style.display = 'none'; sOk.style.display = 'flex';
+    document.getElementById('ok-msg').textContent = 'Archivo generado: ' + fname;
+  } catch (err) {
+    sLoad.style.display = 'none'; sErr.style.display = 'flex';
+    document.getElementById('err-msg').textContent = err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '⚙️  Generar Conciliación Excel';
+  }
+});
+</script>
+</body>
+</html>
