@@ -1,8 +1,9 @@
-# Lectura de CSVs y calculo de indicadores
+# CAPUFE - Lectura de CSVs y calculo de indicadores
+
 import io
+import re
 import pandas as pd
 from config import TARIFAS
-
 
 def clean_int(val):
     try:
@@ -38,63 +39,143 @@ def dec_to_hms(d):
         return ""
 
 
-def _normalize_col(name):
-    """Elimina acentos para uso interno."""
+def _normalize_col(name: str) -> str:
+    """Elimina acentos y basura para uso interno (mantiene espacios)."""
     replacements = {
-        "a\u0301":"a","e\u0301":"e","i\u0301":"i","o\u0301":"o","u\u0301":"u",
-        "\xe1":"a","\xe9":"e","\xed":"i","\xf3":"o","\xfa":"u",
-        "\xc1":"A","\xc9":"E","\xcd":"I","\xd3":"O","\xda":"U",
-        "\xf1":"n","\xd1":"N",".":"",
+        "a\u0301": "a", "e\u0301": "e", "i\u0301": "i", "o\u0301": "o", "u\u0301": "u",
+        "\xe1": "a", "\xe9": "e", "\xed": "i", "\xf3": "o", "\xfa": "u",
+        "\xc1": "A", "\xc9": "E", "\xcd": "I", "\xd3": "O", "\xda": "U",
+        "\xf1": "n", "\xd1": "N",
+        "\ufeff": "",
     }
+    s = str(name)
     for old, new in replacements.items():
-        name = name.replace(old, new)
-    return name.strip()
+        s = s.replace(old, new)
+    return s.strip()
+
+
+def _canon(s: str) -> str:
+    """Convierte a forma canónica para comparar nombres de columnas."""
+    s = _normalize_col(s).lower()
+    return re.sub(r"[^a-z0-9]", "", s)
+
+
+def _find_col(df: pd.DataFrame, wanted: str):
+    """Encuentra columna aunque tenga acentos, guiones, mayúsculas, etc."""
+    w = _canon(wanted)
+    for c in df.columns:
+        if _canon(c) == w:
+            return c
+    return None
+
+
+def _require_col(df: pd.DataFrame, wanted: str) -> str:
+    c = _find_col(df, wanted)
+    if not c:
+        raise ValueError(f"No se encontró columna '{wanted}'. Columnas disponibles: {list(df.columns)}")
+    return c
 
 
 def read_clr(file_bytes):
+      # DEBUG TEMPORAL - borra esto después de corregir
+    for enc in ("latin-1", "cp1252", "utf-8-sig", "utf-8"):
+        try:
+            preview = io.BytesIO(file_bytes).read().decode(enc)
+            print("=== PRIMERAS 10 LÍNEAS DEL ARCHIVO ===")
+            for i, line in enumerate(preview.splitlines()[:10]):
+                print(f"  Línea {i}: {line}")
+            break
+        except Exception:
+            continue
     """
     Lee el CSV DF/CLR.
     - 3 filas de titulo antes del encabezado real.
-    - Encoding latin-1.
+    - Encoding variable.
+    - Soporta separador ',' o ';'
     - Primera columna sin nombre = Operador Carretero.
     """
+    # Queremos asegurar estos nombres (para que build_indicators no truene)
+    CANON_TARGETS = {
+        "horatransaccion": "Hora Transaccion",
+        "fechatransaccion": "Fecha Transaccion",
+        "numerotarjeta": "Numero Tarjeta",
+        "numerodetransaccion": "Numero de Transaccion",
+        "plazadecobro": "Plaza de Cobro",
+        "evento": "Evento",
+        "carril": "Carril",
+        "tramo": "Tramo",
+        "clase": "Clase",
+        "tipo": "Tipo",
+    }
+
     for enc in ("latin-1", "cp1252", "utf-8-sig", "utf-8"):
-        try:
-            df = pd.read_csv(
-                io.BytesIO(file_bytes),
-                encoding=enc,
-                sep=",",
-                skiprows=3,
-                dtype=str,
-            )
-            df.columns = df.columns.str.strip().str.lstrip("\ufeff")
-            if df.columns[0].startswith("Unnamed") or df.columns[0] == "":
-                df.rename(columns={df.columns[0]: "Operador Carretero"}, inplace=True)
-            df.rename(columns={c: _normalize_col(c) for c in df.columns}, inplace=True)
-            return df
-        except Exception:
-            continue
+        for sep in (",", ";"):
+            try:
+
+                skip = next(
+    (i for i, line in enumerate(io.BytesIO(file_bytes).read().decode(enc).splitlines()[:10])
+     if len(line.split(sep)) > 5),
+    3
+)
+                df = pd.read_csv(
+    io.BytesIO(file_bytes),
+    encoding=enc,
+    sep=sep,
+    skiprows=skip,
+    dtype=str,
+)
+
+                # si quedó en 1 sola columna, era el separador equivocado
+                if df.shape[1] <= 1:
+                    continue
+
+                # limpia headers
+                df.columns = df.columns.astype(str).str.strip().str.lstrip("\ufeff")
+
+                # primera col vacía => Operador Carretero
+                if df.columns[0].startswith("Unnamed") or df.columns[0] == "":
+                    df.rename(columns={df.columns[0]: "Operador Carretero"}, inplace=True)
+
+                # normaliza acentos en nombres
+                df.rename(columns={c: _normalize_col(c) for c in df.columns}, inplace=True)
+
+                # mapea variantes a nombres estándar
+                rename_map = {}
+                for c in df.columns:
+                    k = _canon(c)
+                    if k in CANON_TARGETS and CANON_TARGETS[k] not in df.columns:
+                        rename_map[c] = CANON_TARGETS[k]
+                if rename_map:
+                    df.rename(columns=rename_map, inplace=True)
+
+                return df
+            except Exception:
+                continue
+
     raise ValueError("No se pudo leer el archivo CLR/DF.")
 
 
 def read_cci(file_bytes):
     """
     Lee el CSV CCI.
-    - Sin filas de titulo.
-    - Encoding utf-8-sig.
+    - Encoding variable.
+    - Soporta separador ',' o ';'
     """
     for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
-        try:
-            df = pd.read_csv(
-                io.BytesIO(file_bytes),
-                encoding=enc,
-                sep=",",
-                dtype=str,
-            )
-            df.columns = df.columns.str.strip().str.lstrip("\ufeff")
-            return df
-        except Exception:
-            continue
+        for sep in (",", ";"):
+            try:
+                df = pd.read_csv(
+                    io.BytesIO(file_bytes),
+                    encoding=enc,
+                    sep=sep,
+                    dtype=str,
+                )
+                if df.shape[1] <= 1:
+                    continue
+                df.columns = df.columns.astype(str).str.strip().str.lstrip("\ufeff")
+                return df
+            except Exception:
+                continue
     raise ValueError("No se pudo leer el archivo CCI.")
 
 
@@ -109,76 +190,104 @@ def _clean_clr_numerics(df):
             )
     return df
 
-
 def build_indicators(clr, cci):
-    """
-    Calcula todos los campos derivados y hace el merge CLR <- CCI.
-    Devuelve un DataFrame con todas las columnas de salida.
-    """
     clr = _clean_clr_numerics(clr.copy())
     cci = cci.copy()
 
-    # Indicadores CLR
+    # -----------------------------
+    # CLR
+    # -----------------------------
     clr["CONVERSION_HORA"] = clr["Hora Transaccion"].apply(hora_to_hms)
-    clr["_dec_clr"]        = clr["CONVERSION_HORA"].apply(hms_to_dec)
+    clr["_dec_clr"] = clr["CONVERSION_HORA"].apply(hms_to_dec)
 
-    clr["CLASE_VAL"]        = (clr["Clase"].fillna("").str.strip()
-                               + clr["Tipo"].fillna("").str.strip())
-    clr["INDICADOR_TARIFA"] = (clr["Tramo"].fillna("").str.strip()
-                               + clr["CLASE_VAL"])
-    clr["IMPORTE_VALUADO"]  = clr["INDICADOR_TARIFA"].map(TARIFAS)
+    clr["CLASE_VAL"] = (
+        clr["Clase"].fillna("").str.strip()
+        + clr["Tipo"].fillna("").str.strip()
+    )
+
+    clr["INDICADOR_TARIFA"] = (
+        clr["Tramo"].fillna("").str.strip()
+        + clr["CLASE_VAL"]
+    )
+
+    clr["IMPORTE_VALUADO"] = clr["INDICADOR_TARIFA"].map(TARIFAS)
 
     clr["INDICADOR_PISO"] = (
         clr["Numero Tarjeta"].fillna("").str.strip()
         + clr["Evento"].fillna("").str.strip()
-        + clr["_dec_clr"].apply(lambda x: str(x) if x is not None else "")
+        + clr["_dec_clr"].apply(lambda x: f"{x:.6f}" if x is not None else "")
     )
 
-    # Indicadores CCI
+    # -----------------------------
+    # CCI
+    # -----------------------------
     cci["_dec_cci"] = cci["HORA"].apply(hms_to_dec)
+
     cci["INDICADOR_CCI"] = (
         cci["NUMERO_TAG"].fillna("").str.strip()
         + cci["EVENTO"].fillna("").str.strip()
-        + cci["_dec_cci"].apply(lambda x: str(x) if x is not None else "")
+        + cci["_dec_cci"].apply(lambda x: f"{x:.6f}" if x is not None else "")
     )
-    cci = cci.rename(columns={"EVENTO": "EVENTO_CCI", "CLASE": "CLASE_CCI"})
 
-    # Merge
-    mg = clr.merge(cci, left_on="INDICADOR_PISO", right_on="INDICADOR_CCI", how="left")
+    cci = cci.rename(columns={
+        "EVENTO": "EVENTO_CCI",
+        "CLASE": "CLASE_CCI"
+    })
+    
+    mg = clr.merge(
+    cci,
+    left_on="INDICADOR_PISO",
+    right_on="INDICADOR_CCI",
+    how="left",
+    indicator=True   
+    )
+   # DEBUG (para ver si sí cruza)
+    print("CLR:", len(clr))
+    print("CCI:", len(cci))
+    print("MERGE:", len(mg))
+    print("COINCIDENCIAS:", mg["NUMERO_TAG"].notna().sum())
 
-    # Validaciones
+    # -----------------------------
+    # VALIDACIONES
+    # -----------------------------
     mg["VAL_TARJETA"] = (
         mg["Numero Tarjeta"].fillna("").str.strip()
         == mg["NUMERO_TAG"].fillna("").str.strip()
     )
+
     mg["VAL_EVENTO"] = (
         mg["Evento"].fillna("").str.strip()
         == mg["EVENTO_CCI"].fillna("").str.strip()
     )
+
     mg["VAL_TRAMO"] = (
         mg["Tramo"].fillna("").str.strip()
         == mg["CVE_TRAMO"].fillna("").str.strip()
     )
+
     mg["VAL_CARRIL"] = (
         mg["Carril"].fillna("").str.strip()
         == mg["CVE_CARRIL"].fillna("").str.strip()
     )
 
+    # -----------------------------
+    # DIFERENCIAS
+    # -----------------------------
     def _val_hora(row):
         try:
             return dec_to_hms(float(row["_dec_clr"]) - float(row["_dec_cci"]))
-        except Exception:
+        except:
             return ""
 
     def _diferencia(row):
         try:
-            v = float(row["IMPORTE_VALUADO"]) if pd.notna(row["IMPORTE_VALUADO"]) else 0.0
-            t = float(row["IMPORTE_TOTAL"])   if pd.notna(row["IMPORTE_TOTAL"])   else 0.0
+            v = float(row["IMPORTE_VALUADO"]) if pd.notna(row["IMPORTE_VALUADO"]) else 0
+            t = float(row["IMPORTE_TOTAL"]) if pd.notna(row["IMPORTE_TOTAL"]) else 0
             return v - t
-        except Exception:
+        except:
             return None
 
-    mg["VAL_HORA"]   = mg.apply(_val_hora,   axis=1)
+    mg["VAL_HORA"] = mg.apply(_val_hora, axis=1)
     mg["DIFERENCIA"] = mg.apply(_diferencia, axis=1)
 
     return mg

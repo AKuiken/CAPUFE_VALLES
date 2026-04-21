@@ -81,9 +81,16 @@ CCI_COLS = [
     ("INDICADOR_CCI",  "INDICADOR_ CCI\n(TAG&EVENTO&HORA)", "CCI", True),
 ]
 
-ALL_COLS = DF_COLS + CALC_COLS + CCI_COLS
+RESULT_COLS = [
+    ("ESCENARIO",   "ESCENARIO",   "RESULTADO", False),
+    ("DF_DIA",      "DF_DIA",      "RESULTADO", False),
+    ("CCI_DIA",     "CCI_DIA",     "RESULTADO", False),
+    ("DIF_IMPORTE", "DIF_IMPORTE", "RESULTADO", False),
+]
+ALL_COLS = RESULT_COLS + DF_COLS + CALC_COLS + CCI_COLS
 
 SECTION_COLORS = {
+    "RESULTADO": {"hbg": "0B3D2E", "hfg": "FFFFFF", "dbg": "E8F5E9"},
     "DF":        {"hbg": "1F4E79", "hfg": "FFFFFF", "dbg": "DEEAF1"},
     "VALUACION": {"hbg": "7B3F00", "hfg": "FFFFFF", "dbg": "FCE4D6"},
     "CCI":       {"hbg": "1E4620", "hfg": "FFFFFF", "dbg": "E2EFDA"},
@@ -98,5 +105,11 @@ COLUMN_WIDTHS = {
     "ID_ENVIO_OTI":                           20,
     "Numero Tarjeta":                         16,
     "NUMERO_TAG":                             16,
+    "ESCENARIO": 55,
+    "DF_DIA": 12,
+    "CCI_DIA": 12,
+    "DIF_IMPORTE": 14,
 }
 DEFAULT_WIDTH = 13
+
+

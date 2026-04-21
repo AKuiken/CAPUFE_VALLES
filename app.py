@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+# ─────────────────────────────────────────────────────────────────────────────
+# CAPUFE – Servidor web  (Flask)
+# Ejecutar: python app.py
+# ─────────────────────────────────────────────────────────────────────────────
+
 import socket
 import traceback
 from datetime import datetime
@@ -28,20 +34,54 @@ def _local_ip() -> str:
 def index():
     return render_template("index.html", ip=_local_ip(), year=datetime.now().year)
 
-
 @app.route("/process", methods=["POST"])
 def process():
+    # 🔹 HOY (obligatorios)
     df_file  = request.files.get("df_file")
     cci_file = request.files.get("cci_file")
 
+    # 🔹 Día anterior (opcionales)
+    df_ant_file  = request.files.get("df_file_2")
+    cci_ant_file = request.files.get("cci_file_2")
+
+    # 🔹 Día posterior (opcionales)
+    df_pos_file  = request.files.get("df_file_3")
+    cci_pos_file = request.files.get("cci_file_3")
+
     if not df_file or not cci_file:
-        return jsonify({"error": "Se requieren ambos archivos (CLR/DF y CCI)."}), 400
+        return jsonify({"error": "Se requieren ambos archivos (CLR/DF y CCI) del día HOY."}), 400
+
+    # Si suben uno del día anterior, deben subir el par completo
+    if (df_ant_file and not cci_ant_file) or (cci_ant_file and not df_ant_file):
+        return jsonify({"error": "Para 'Día anterior' debes subir ambos: CLR anterior y CCI anterior."}), 400
+
+    # Si suben uno del día posterior, deben subir el par completo
+    if (df_pos_file and not cci_pos_file) or (cci_pos_file and not df_pos_file):
+        return jsonify({"error": "Para 'Día posterior' debes subir ambos: CLR posterior y CCI posterior."}), 400
 
     try:
+        # ✅ Leer HOY
         clr_df = read_clr(df_file.read())
         cci_df = read_cci(cci_file.read())
-        merged = build_indicators(clr_df, cci_df)
-        buf    = generate_excel(merged)
+        merged_hoy = build_indicators(clr_df, cci_df)
+
+        # ✅ Leer ANTERIOR (si viene)
+        merged_ant = None
+        if df_ant_file and cci_ant_file:
+            clr_ant = read_clr(df_ant_file.read())
+            cci_ant = read_cci(cci_ant_file.read())
+            merged_ant = build_indicators(clr_ant, cci_ant)
+
+        # ✅ Leer POSTERIOR (si viene)
+        merged_pos = None
+        if df_pos_file and cci_pos_file:
+            clr_pos = read_clr(df_pos_file.read())
+            cci_pos = read_cci(cci_pos_file.read())
+            merged_pos = build_indicators(clr_pos, cci_pos)
+
+        # 👇 Aquí está la clave:
+        # En vez de generate_excel(merged) ahora le mandamos también anterior/posterior
+        buf = generate_excel(merged_hoy, merged_ant=merged_ant, merged_pos=merged_pos)
 
         ts    = datetime.now().strftime("%Y%m%d_%H%M%S")
         fname = f"Conciliacion_CLR_CCI_{ts}.xlsx"
@@ -57,7 +97,6 @@ def process():
         traceback.print_exc()
         return jsonify({"error": str(exc)}), 500
 
-
 # ── Inicio ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -65,7 +104,8 @@ if __name__ == "__main__":
     print("\n" + "=" * 54)
     print("  CAPUFE – Conciliación CLR-CCI")
     print("=" * 54)
-    print(f"  Local :  http://127.0.0.1:5000")
-    print(f"  Red   :  http://{ip}:5000")
+    print(f"  Local :  http://127.0.0.1:8502")
+    print(f"  Red   :  http://{ip}:8502")
     print("=" * 54 + "\n")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=8502, debug=False)
+     

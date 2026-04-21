@@ -85,9 +85,10 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;border-t
     <div class="logo-box">CA<span>PUFE</span></div>
     <div class="hdr-div"></div>
     <div class="hdr-text">
-      <h1>Sistema de Conciliación Valles</h1>
+      <h1>Sistema de Conciliación CLR-CCI</h1>
       <p>Secretaría de Infraestructura, Comunicaciones y Transportes</p>
     </div>
+    <div class="hdr-ip">🌐 {{ ip }}:8502</div>
   </div>
 </header>
 
@@ -97,6 +98,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;border-t
   <div class="card">
     <div class="card-title">📂 Seleccionar Archivos CSV</div>
     <form id="mainForm" method="POST" action="/process" enctype="multipart/form-data">
+      <!-- Cuadros de archivos -->
       <div class="upload-grid">
         <div>
           <div class="upload-box" id="box-df">
@@ -118,6 +120,54 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;border-t
             <div class="upload-label">Archivo Dispersión CCI</div>
             <div class="upload-hint">Formato CSV · Datos de Cobro</div>
             <div class="upload-name" id="name-cci"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="upload-box" id="box-df-2">
+            <input type="file" name="df_file_2" accept=".csv"
+                   onchange="onFile(this,'box-df-2','name-df-2')">
+            <div class="upload-badge">DF / CLR</div>
+            <div class="upload-icon">📋</div>
+            <div class="upload-label">Archivo CLR Día Anterior</div>
+            <div class="upload-hint">Formato CSV·</div>
+            <div class="upload-name" id="name-df-2"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="upload-box" id="box-cci-2">
+            <input type="file" name="cci_file_2" accept=".csv"
+                   onchange="onFile(this,'box-cci-2','name-cci-2')">
+            <div class="upload-badge cci">CCI</div>
+            <div class="upload-icon">📡</div>
+            <div class="upload-label">Archivo CCI Día Anterior</div>
+            <div class="upload-hint">Formato CSV·</div>
+            <div class="upload-name" id="name-cci-2"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="upload-box" id="box-df-3">
+            <input type="file" name="df_file_3" accept=".csv"
+                   onchange="onFile(this,'box-df-3','name-df-3')">
+            <div class="upload-badge">DF / CLR</div>
+            <div class="upload-icon">📋</div>
+            <div class="upload-label">Archivo CLR Día Posterior</div>
+            <div class="upload-hint">Formato CSV · Datos de Piso</div>
+            <div class="upload-name" id="name-df-3"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="upload-box" id="box-cci-3">
+            <input type="file" name="cci_file_3" accept=".csv"
+                   onchange="onFile(this,'box-cci-3','name-cci-3')">
+            <div class="upload-badge cci">CCI</div>
+            <div class="upload-icon">📡</div>
+            <div class="upload-label">Archivo CCI Día Posterior</div>
+            <div class="upload-hint">Formato CSV · Datos de Cobro</div>
+            <div class="upload-name" id="name-cci-3"></div>
           </div>
         </div>
       </div>
@@ -168,7 +218,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;border-t
     <div class="net-box">
       ℹ️ &nbsp;
       Desde cualquier equipo en la misma red, abre un navegador y accede a:
-      &nbsp;<strong>http://{{ ip }}:5000</strong>
+      &nbsp;<strong>http://{{ ip }}:8502</strong>
     </div>
   </div>
 
