@@ -94,7 +94,6 @@ def read_clr(file_bytes):
     - Soporta separador ',' o ';'
     - Primera columna sin nombre = Operador Carretero.
     """
-    # Queremos asegurar estos nombres (para que build_indicators no truene)
     CANON_TARGETS = {
         "horatransaccion": "Hora Transaccion",
         "fechatransaccion": "Fecha Transaccion",
