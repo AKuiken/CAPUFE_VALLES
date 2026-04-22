@@ -8,7 +8,7 @@
 :root{
   --green:#006341;--green-dark:#004d31;--green-mid:#2e7d32;
   --green-light:#e8f5e9;--green-pale:#f1f9f3;
-  --gold:#C8A84B;--blue-dark:#1F4E79;
+  --gold:#C8A84B;--blue-dark:#1F4E79;--blue-light:#e3f2fd;
   --red:#c62828;--orange:#7B3F00;
   --border:#d0ddd5;--bg:#f3f7f4;--white:#fff;
   --text:#1a2a1f;--muted:#6b7c6e;
@@ -29,24 +29,64 @@ header{background:var(--green);display:flex;align-items:center;box-shadow:0 2px 
 .hdr-ip{margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 14px;font-size:12px;color:#fff;font-weight:600}
 
 /* Main */
-main{max-width:960px;margin:34px auto;padding:0 20px 40px}
+main{max-width:960px;margin:30px auto;padding:0 20px 40px}
 
 /* Cards */
 .card{background:var(--white);border-radius:10px;border:1px solid var(--border);box-shadow:var(--shadow);padding:26px 30px;margin-bottom:22px}
 .card-title{font-size:15px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green-light);padding-bottom:10px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
 
-/* Upload */
-.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:600px){.upload-grid{grid-template-columns:1fr}}
-.upload-box{border:2px dashed var(--green);border-radius:8px;padding:22px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--green-pale);position:relative}
-.upload-box:hover,.upload-box.active{border-color:var(--green-mid);background:var(--green-light);transform:translateY(-2px);box-shadow:0 5px 16px rgba(0,100,50,.15)}
+/* ─── Secciones de día ─── */
+.day-section{margin-bottom:4px}
+
+.day-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 16px;border-radius:8px;border:1px solid var(--border)}
+.day-header.anterior{background:#f5f5f5;border-color:#ccc}
+.day-header.hoy{background:linear-gradient(135deg,#e8f5e9 0%,#f1f9f3 100%);border:2px solid #a5d6a7}
+.day-header.posterior{background:#f5f5f5;border-color:#ccc}
+
+.day-badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:20px;letter-spacing:1px;flex-shrink:0}
+.day-badge.ant{background:#78909c;color:#fff}
+.day-badge.hoy{background:var(--green);color:#fff}
+.day-badge.pos{background:#78909c;color:#fff}
+
+.day-title{font-size:13px;font-weight:700;flex:1}
+.day-title.ant{color:#546e7a}
+.day-title.hoy{color:var(--green-dark)}
+.day-title.pos{color:#546e7a}
+
+.day-sub{font-size:11px;color:var(--muted);margin-top:1px}
+
+.req-tag{font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;flex-shrink:0}
+.opt-tag{font-size:10px;font-weight:600;padding:2px 9px;border-radius:10px;background:#f3f3f3;color:#888;border:1px solid #ddd;flex-shrink:0}
+
+/* Upload pair */
+.upload-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.upload-pair{grid-template-columns:1fr}}
+
+/* Upload boxes */
+.upload-box{border:2px dashed var(--green);border-radius:8px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--green-pale);position:relative}
+.upload-box.cci-box{border-color:#1F4E79;background:#f0f5ff}
+.upload-box:hover{transform:translateY(-2px);box-shadow:0 5px 16px rgba(0,100,50,.12)}
+.upload-box.cci-box:hover{box-shadow:0 5px 16px rgba(31,78,121,.12)}
+.upload-box.active{background:var(--green-light);border-color:var(--green-mid);transform:translateY(-2px)}
+.upload-box.cci-box.active{background:#dce8ff;border-color:#1F4E79}
+.upload-box.opt{opacity:.8}
+.upload-box.opt:hover{opacity:1}
 .upload-box input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-.upload-badge{display:inline-block;background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:20px;letter-spacing:1px;margin-bottom:10px}
-.upload-badge.cci{background:var(--blue-dark)}
-.upload-icon{font-size:38px;margin-bottom:8px}
-.upload-label{font-weight:700;font-size:14px;color:var(--green);margin-bottom:4px}
+
+.type-pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:1px;margin-bottom:8px}
+.type-pill.df{background:var(--green);color:#fff}
+.type-pill.cci{background:var(--blue-dark);color:#fff}
+
+.upload-icon{font-size:28px;margin-bottom:5px}
+.upload-label{font-weight:700;font-size:13px;color:var(--green);margin-bottom:2px}
+.cci-box .upload-label{color:var(--blue-dark)}
 .upload-hint{font-size:11px;color:var(--muted)}
-.upload-name{font-size:11px;font-weight:600;color:var(--green-mid);margin-top:10px;word-break:break-all;display:none}
+.upload-name{font-size:11px;font-weight:600;color:var(--green-mid);margin-top:8px;word-break:break-all;display:none;background:rgba(0,99,65,.07);padding:4px 8px;border-radius:4px}
+.cci-box .upload-name{color:#1a4e79;background:rgba(31,78,121,.07)}
+
+/* Arrow separator */
+.day-sep{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--muted);font-size:12px}
+.day-sep::before,.day-sep::after{content:'';flex:1;height:1px;background:var(--border)}
 
 /* Info table */
 .info-table{width:100%;border-collapse:collapse;font-size:12px}
@@ -58,7 +98,7 @@ main{max-width:960px;margin:34px auto;padding:0 20px 40px}
 .badge-cci{background:var(--blue-dark);color:#fff}
 
 /* Button */
-.btn-submit{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-top:6px}
+.btn-submit{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-top:20px}
 .btn-submit:hover{background:var(--green-mid);box-shadow:0 4px 16px rgba(0,100,50,.28)}
 .btn-submit:disabled{background:#9e9e9e;cursor:not-allowed;box-shadow:none}
 
@@ -98,72 +138,99 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;border-t
   <div class="card">
     <div class="card-title">📂 Seleccionar Archivos CSV</div>
     <form id="mainForm" method="POST" action="/process" enctype="multipart/form-data">
-      <!-- Cuadros de archivos -->
-      <div class="upload-grid">
-        <div>
+
+      <!-- ── DÍA ANTERIOR ── -->
+      <div class="day-section">
+        <div class="day-header anterior">
+          <span class="day-badge ant">← ANTERIOR</span>
+          <div>
+            <div class="day-title ant">Archivos del Día Anterior</div>
+            <div class="day-sub">Para conciliar transacciones de la franja 22:01 – 00:00</div>
+          </div>
+          <span class="opt-tag">Opcional</span>
+        </div>
+        <div class="upload-pair">
+          <div class="upload-box opt" id="box-df-2">
+            <input type="file" name="df_file_2" accept=".csv"
+                   onchange="onFile(this,'box-df-2','name-df-2')">
+            <div class="type-pill df">📋 DF / CLR</div>
+            <div class="upload-icon">📋</div>
+            <div class="upload-label">Archivo CLR Día Anterior</div>
+            <div class="upload-hint">Formato CSV · Datos de Piso</div>
+            <div class="upload-name" id="name-df-2"></div>
+          </div>
+          <div class="upload-box cci-box opt" id="box-cci-2">
+            <input type="file" name="cci_file_2" accept=".csv"
+                   onchange="onFile(this,'box-cci-2','name-cci-2')">
+            <div class="type-pill cci">📡 CCI</div>
+            <div class="upload-icon">📡</div>
+            <div class="upload-label">Archivo CCI Día Anterior</div>
+            <div class="upload-hint">Formato CSV · Datos de Cobro</div>
+            <div class="upload-name" id="name-cci-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-sep">↓ Día a Conciliar ↓</div>
+
+      <!-- ── DÍA A CONCILIAR (HOY) ── -->
+      <div class="day-section">
+        <div class="day-header hoy">
+          <span class="day-badge hoy">📅 DÍA A CONCILIAR</span>
+          <div>
+            <div class="day-title hoy">Archivos del Día Principal</div>
+            <div class="day-sub">Fecha de la conciliación — obligatorio subir ambos archivos</div>
+          </div>
+          <span class="req-tag">⚠ Requerido</span>
+        </div>
+        <div class="upload-pair">
           <div class="upload-box" id="box-df">
             <input type="file" name="df_file" accept=".csv" required
                    onchange="onFile(this,'box-df','name-df')">
-            <div class="upload-badge">DF / CLR</div>
+            <div class="type-pill df">📋 DF / CLR</div>
             <div class="upload-icon">📋</div>
             <div class="upload-label">Archivo Dictaminado CLR</div>
             <div class="upload-hint">Formato CSV · Datos de Piso</div>
             <div class="upload-name" id="name-df"></div>
           </div>
-        </div>
-        <div>
-          <div class="upload-box" id="box-cci">
+          <div class="upload-box cci-box" id="box-cci">
             <input type="file" name="cci_file" accept=".csv" required
                    onchange="onFile(this,'box-cci','name-cci')">
-            <div class="upload-badge cci">CCI</div>
+            <div class="type-pill cci">📡 CCI</div>
             <div class="upload-icon">📡</div>
             <div class="upload-label">Archivo Dispersión CCI</div>
             <div class="upload-hint">Formato CSV · Datos de Cobro</div>
             <div class="upload-name" id="name-cci"></div>
           </div>
         </div>
+      </div>
 
-        <div>
-          <div class="upload-box" id="box-df-2">
-            <input type="file" name="df_file_2" accept=".csv"
-                   onchange="onFile(this,'box-df-2','name-df-2')">
-            <div class="upload-badge">DF / CLR</div>
-            <div class="upload-icon">📋</div>
-            <div class="upload-label">Archivo CLR Día Anterior</div>
-            <div class="upload-hint">Formato CSV·</div>
-            <div class="upload-name" id="name-df-2"></div>
+      <div class="day-sep">↓ Día Posterior ↓</div>
+
+      <!-- ── DÍA POSTERIOR ── -->
+      <div class="day-section">
+        <div class="day-header posterior">
+          <span class="day-badge pos">POSTERIOR →</span>
+          <div>
+            <div class="day-title pos">Archivos del Día Posterior</div>
+            <div class="day-sub">Para conciliar transacciones de la franja 00:00 – 22:00</div>
           </div>
+          <span class="opt-tag">Opcional</span>
         </div>
-
-        <div>
-          <div class="upload-box" id="box-cci-2">
-            <input type="file" name="cci_file_2" accept=".csv"
-                   onchange="onFile(this,'box-cci-2','name-cci-2')">
-            <div class="upload-badge cci">CCI</div>
-            <div class="upload-icon">📡</div>
-            <div class="upload-label">Archivo CCI Día Anterior</div>
-            <div class="upload-hint">Formato CSV·</div>
-            <div class="upload-name" id="name-cci-2"></div>
-          </div>
-        </div>
-
-        <div>
-          <div class="upload-box" id="box-df-3">
+        <div class="upload-pair">
+          <div class="upload-box opt" id="box-df-3">
             <input type="file" name="df_file_3" accept=".csv"
                    onchange="onFile(this,'box-df-3','name-df-3')">
-            <div class="upload-badge">DF / CLR</div>
+            <div class="type-pill df">📋 DF / CLR</div>
             <div class="upload-icon">📋</div>
             <div class="upload-label">Archivo CLR Día Posterior</div>
             <div class="upload-hint">Formato CSV · Datos de Piso</div>
             <div class="upload-name" id="name-df-3"></div>
           </div>
-        </div>
-
-        <div>
-          <div class="upload-box" id="box-cci-3">
+          <div class="upload-box cci-box opt" id="box-cci-3">
             <input type="file" name="cci_file_3" accept=".csv"
                    onchange="onFile(this,'box-cci-3','name-cci-3')">
-            <div class="upload-badge cci">CCI</div>
+            <div class="type-pill cci">📡 CCI</div>
             <div class="upload-icon">📡</div>
             <div class="upload-label">Archivo CCI Día Posterior</div>
             <div class="upload-hint">Formato CSV · Datos de Cobro</div>
@@ -240,23 +307,58 @@ function onFile(input, boxId, nameId) {
   }
 }
 
-['box-df','box-cci'].forEach(id => {
-  const box = document.getElementById(id);
-  const nid = id === 'box-df' ? 'name-df' : 'name-cci';
-  box.addEventListener('dragover',  e => { e.preventDefault(); box.classList.add('active'); });
-  box.addEventListener('dragleave', () => box.classList.remove('active'));
+// Drag & drop para todos los upload boxes
+document.querySelectorAll('.upload-box').forEach(box => {
+  const inp = box.querySelector('input[type=file]');
+  const match = inp.getAttribute('onchange').match(/'([^']+)'\s*\)$/);
+  const nid = match ? match[1] : null;
+
+  box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('active'); });
+  box.addEventListener('dragleave', () => { if (!inp.files.length) box.classList.remove('active'); });
   box.addEventListener('drop', e => {
     e.preventDefault();
-    const inp = box.querySelector('input[type=file]');
-    const dt  = new DataTransfer();
+    const dt = new DataTransfer();
     dt.items.add(e.dataTransfer.files[0]);
     inp.files = dt.files;
-    onFile(inp, id, nid);
+    if (nid) {
+      const nm = document.getElementById(nid);
+      nm.textContent   = '✔ ' + e.dataTransfer.files[0].name;
+      nm.style.display = 'block';
+    }
+    box.classList.add('active');
   });
 });
 
+// Validación de pares opcionales
+function checkPairs() {
+  const pairs = [
+    { a: 'box-df-2', b: 'box-cci-2', label: 'día anterior' },
+    { a: 'box-df-3', b: 'box-cci-3', label: 'día posterior' },
+  ];
+  for (const p of pairs) {
+    const fa = document.getElementById(p.a).querySelector('input').files.length;
+    const fb = document.getElementById(p.b).querySelector('input').files.length;
+    if ((fa > 0 && fb === 0) || (fa === 0 && fb > 0)) {
+      return `Para el ${p.label} debes subir AMBOS archivos: DF/CLR y CCI.`;
+    }
+  }
+  return null;
+}
+
 document.getElementById('mainForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  const pairError = checkPairs();
+  if (pairError) {
+    const stat = document.getElementById('status');
+    stat.style.display = 'block';
+    document.getElementById('s-load').style.display = 'none';
+    document.getElementById('s-ok').style.display   = 'none';
+    document.getElementById('s-err').style.display  = 'flex';
+    document.getElementById('err-msg').textContent  = pairError;
+    return;
+  }
+
   const btn   = document.getElementById('btnSubmit');
   const stat  = document.getElementById('status');
   const sLoad = document.getElementById('s-load');

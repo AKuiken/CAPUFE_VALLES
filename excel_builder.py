@@ -201,14 +201,19 @@ def _build_scenarios(df_hoy: pd.DataFrame, merged_ant: pd.DataFrame | None, merg
 def generate_excel(df_hoy: pd.DataFrame, merged_ant=None, merged_pos=None) -> io.BytesIO:
     wb = Workbook()
 
+    # ✅ 1) Aquí ahora sí usamos tu función que arma escenarios
     conciliacion, ajustes = _build_scenarios(df_hoy, merged_ant, merged_pos)
+
+    # ✅ 2) Hoja CONCILIACION (pero con "conciliacion", NO con df_hoy)
     ws_main = wb.active
     ws_main.title = "CONCILIACION"
     _write_conciliacion(ws_main, conciliacion)
 
+    # ✅ 3) Hoja AJUSTES (nuevo)
     ws_aj = wb.create_sheet("AJUSTES")
     _write_conciliacion(ws_aj, ajustes)
 
+    # ✅ 4) Hoja TARIFAS (igual)
     ws_tar = wb.create_sheet("TARIFAS")
     _write_tarifas(ws_tar)
 

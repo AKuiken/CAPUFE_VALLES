@@ -94,6 +94,7 @@ def read_clr(file_bytes):
     - Soporta separador ',' o ';'
     - Primera columna sin nombre = Operador Carretero.
     """
+    # Queremos asegurar estos nombres (para que build_indicators no truene)
     CANON_TARGETS = {
         "horatransaccion": "Hora Transaccion",
         "fechatransaccion": "Fecha Transaccion",
@@ -159,7 +160,27 @@ def read_cci(file_bytes):
     Lee el CSV CCI.
     - Encoding variable.
     - Soporta separador ',' o ';'
+    - Detecta si se subió un archivo DF/CLR por error.
     """
+    # Detectar si el archivo es en realidad un DF/CLR (tiene encabezados de texto al inicio)
+    for enc in ("latin-1", "cp1252", "utf-8-sig", "utf-8"):
+        try:
+            first_lines = io.BytesIO(file_bytes).read().decode(enc).splitlines()[:4]
+            joined = " ".join(first_lines).upper()
+            if "CONCILIACION" in joined or "DICTAMEN" in joined or "LA CALERA" in joined:
+                raise ValueError(
+                    "El archivo parece ser un DF/CLR, no un CCI. "
+                    "Verifica que hayas seleccionado el archivo correcto en el campo CCI."
+                )
+            break
+        except ValueError:
+            raise
+        except Exception:
+            continue
+
+    # Columnas esperadas en un CCI válido
+    EXPECTED_CCI_COLS = {"UUID", "NUMERO_TAG", "FECHA", "HORA", "CVE_CARRIL", "EVENTO"}
+
     for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
         for sep in (",", ";"):
             try:
@@ -172,10 +193,35 @@ def read_cci(file_bytes):
                 if df.shape[1] <= 1:
                     continue
                 df.columns = df.columns.astype(str).str.strip().str.lstrip("\ufeff")
-                return df
+                # Verificar que tenga al menos algunas columnas CCI esperadas
+                cols_upper = {c.upper() for c in df.columns}
+                if len(EXPECTED_CCI_COLS & cols_upper) >= 3:
+                    return df
+                # Si tiene columnas pero no son CCI, intentar con otro encoding/sep
+                continue
             except Exception:
                 continue
-    raise ValueError("No se pudo leer el archivo CCI.")
+
+    # Último intento sin validación de columnas (por si el formato varía)
+    for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
+        for sep in (",", ";"):
+            try:
+                df = pd.read_csv(
+                    io.BytesIO(file_bytes),
+                    encoding=enc,
+                    sep=sep,
+                    dtype=str,
+                )
+                if df.shape[1] > 1:
+                    df.columns = df.columns.astype(str).str.strip().str.lstrip("\ufeff")
+                    return df
+            except Exception:
+                continue
+
+    raise ValueError(
+        "No se pudo leer el archivo CCI. "
+        "Asegúrate de que sea un CSV válido con columnas como UUID, NUMERO_TAG, HORA, EVENTO."
+    )
 
 
 def _clean_clr_numerics(df):
