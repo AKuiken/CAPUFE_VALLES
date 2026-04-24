@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# CAPUFE – Servidor web  
+# CAPUFE – Servidor web  (Flask)
 # ─────────────────────────────────────────────────────────────────────────────
 
 import socket
@@ -34,58 +34,45 @@ def index():
 
 @app.route("/process", methods=["POST"])
 def process():
+    # HOY 
     df_file  = request.files.get("df_file")
     cci_file = request.files.get("cci_file")
 
+    # Día anterior 
     df_ant_file  = request.files.get("df_file_2")
     cci_ant_file = request.files.get("cci_file_2")
 
+    # Día posterior 
     df_pos_file  = request.files.get("df_file_3")
     cci_pos_file = request.files.get("cci_file_3")
 
     if not df_file or not cci_file:
         return jsonify({"error": "Se requieren ambos archivos (CLR/DF y CCI) del día HOY."}), 400
 
+    # Si suben uno del día anterior, deben subir el par completo
     if (df_ant_file and not cci_ant_file) or (cci_ant_file and not df_ant_file):
         return jsonify({"error": "Para 'Día anterior' debes subir ambos: CLR anterior y CCI anterior."}), 400
 
+    # Si suben uno del día posterior, deben subir el par completo
     if (df_pos_file and not cci_pos_file) or (cci_pos_file and not df_pos_file):
         return jsonify({"error": "Para 'Día posterior' debes subir ambos: CLR posterior y CCI posterior."}), 400
 
     try:
 
-        try:
-            clr_df = read_clr(df_file.read())
-        except Exception as e:
-            raise ValueError(f"No se pudo leer el archivo DF/CLR del día a conciliar: {e}")
-        try:
-            cci_df = read_cci(cci_file.read())
-        except Exception as e:
-            raise ValueError(f"No se pudo leer el archivo CCI del día a conciliar: {e}")
+        clr_df = read_clr(df_file.read())
+        cci_df = read_cci(cci_file.read())
         merged_hoy = build_indicators(clr_df, cci_df)
 
         merged_ant = None
         if df_ant_file and cci_ant_file:
-            try:
-                clr_ant = read_clr(df_ant_file.read())
-            except Exception as e:
-                raise ValueError(f"No se pudo leer el archivo DF/CLR del día anterior: {e}")
-            try:
-                cci_ant = read_cci(cci_ant_file.read())
-            except Exception as e:
-                raise ValueError(f"No se pudo leer el archivo CCI del día anterior: {e}")
+            clr_ant = read_clr(df_ant_file.read())
+            cci_ant = read_cci(cci_ant_file.read())
             merged_ant = build_indicators(clr_ant, cci_ant)
 
         merged_pos = None
         if df_pos_file and cci_pos_file:
-            try:
-                clr_pos = read_clr(df_pos_file.read())
-            except Exception as e:
-                raise ValueError(f"No se pudo leer el archivo DF/CLR del día posterior: {e}")
-            try:
-                cci_pos = read_cci(cci_pos_file.read())
-            except Exception as e:
-                raise ValueError(f"No se pudo leer el archivo CCI del día posterior: {e}")
+            clr_pos = read_clr(df_pos_file.read())
+            cci_pos = read_cci(cci_pos_file.read())
             merged_pos = build_indicators(clr_pos, cci_pos)
 
         buf = generate_excel(merged_hoy, merged_ant=merged_ant, merged_pos=merged_pos)

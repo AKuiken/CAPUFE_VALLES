@@ -1,4 +1,4 @@
-# CAPUFE - Lectura de CSVs y calculo de indicadores
+# Lectura de CSVs y calculo de indicadores
 
 import io
 import re
@@ -77,7 +77,7 @@ def _require_col(df: pd.DataFrame, wanted: str) -> str:
 
 
 def read_clr(file_bytes):
-      # DEBUG TEMPORAL - borra esto después de corregir
+
     for enc in ("latin-1", "cp1252", "utf-8-sig", "utf-8"):
         try:
             preview = io.BytesIO(file_bytes).read().decode(enc)
@@ -94,7 +94,7 @@ def read_clr(file_bytes):
     - Soporta separador ',' o ';'
     - Primera columna sin nombre = Operador Carretero.
     """
-    # Queremos asegurar estos nombres (para que build_indicators no truene)
+
     CANON_TARGETS = {
         "horatransaccion": "Hora Transaccion",
         "fechatransaccion": "Fecha Transaccion",
@@ -125,7 +125,6 @@ def read_clr(file_bytes):
     dtype=str,
 )
 
-                # si quedó en 1 sola columna, era el separador equivocado
                 if df.shape[1] <= 1:
                     continue
 
@@ -160,67 +159,46 @@ def read_cci(file_bytes):
     Lee el CSV CCI.
     - Encoding variable.
     - Soporta separador ',' o ';'
-    - Detecta si se subió un archivo DF/CLR por error.
+    - Intenta skiprows para archivos con encabezados extra.
     """
-    # Detectar si el archivo es en realidad un DF/CLR (tiene encabezados de texto al inicio)
-    for enc in ("latin-1", "cp1252", "utf-8-sig", "utf-8"):
-        try:
-            first_lines = io.BytesIO(file_bytes).read().decode(enc).splitlines()[:4]
-            joined = " ".join(first_lines).upper()
-            if "CONCILIACION" in joined or "DICTAMEN" in joined or "LA CALERA" in joined:
-                raise ValueError(
-                    "El archivo parece ser un DF/CLR, no un CCI. "
-                    "Verifica que hayas seleccionado el archivo correcto en el campo CCI."
-                )
-            break
-        except ValueError:
-            raise
-        except Exception:
-            continue
-
-    # Columnas esperadas en un CCI válido
-    EXPECTED_CCI_COLS = {"UUID", "NUMERO_TAG", "FECHA", "HORA", "CVE_CARRIL", "EVENTO"}
+    best_df = None
+    best_cols = 0
 
     for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
         for sep in (",", ";"):
-            try:
-                df = pd.read_csv(
-                    io.BytesIO(file_bytes),
-                    encoding=enc,
-                    sep=sep,
-                    dtype=str,
-                )
-                if df.shape[1] <= 1:
-                    continue
-                df.columns = df.columns.astype(str).str.strip().str.lstrip("\ufeff")
-                # Verificar que tenga al menos algunas columnas CCI esperadas
-                cols_upper = {c.upper() for c in df.columns}
-                if len(EXPECTED_CCI_COLS & cols_upper) >= 3:
-                    return df
-                # Si tiene columnas pero no son CCI, intentar con otro encoding/sep
-                continue
-            except Exception:
-                continue
-
-    # Último intento sin validación de columnas (por si el formato varía)
-    for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
-        for sep in (",", ";"):
-            try:
-                df = pd.read_csv(
-                    io.BytesIO(file_bytes),
-                    encoding=enc,
-                    sep=sep,
-                    dtype=str,
-                )
-                if df.shape[1] > 1:
+            for skip in (0, 1, 2, 3):
+                try:
+                    df = pd.read_csv(
+                        io.BytesIO(file_bytes),
+                        encoding=enc,
+                        sep=sep,
+                        skiprows=skip,
+                        dtype=str,
+                    )
+                    if df.shape[1] <= 1:
+                        continue
                     df.columns = df.columns.astype(str).str.strip().str.lstrip("\ufeff")
-                    return df
-            except Exception:
-                continue
+
+                    # Preferir la versión con columnas CCI reconocidas
+                    canon_cols = set(_canon(c) for c in df.columns)
+                    cci_keys = {"uuid", "numerotag", "numerotag", "eventocci"}
+                    if cci_keys & canon_cols:
+                        return df  # coincidencia exacta, retornar de inmediato
+
+                    # Guardar la mejor opción (más columnas) como fallback
+                    if df.shape[1] > best_cols:
+                        best_cols = df.shape[1]
+                        best_df = df
+                except Exception:
+                    continue
+
+    if best_df is not None and best_cols >= 5:
+        return best_df
 
     raise ValueError(
         "No se pudo leer el archivo CCI. "
-        "Asegúrate de que sea un CSV válido con columnas como UUID, NUMERO_TAG, HORA, EVENTO."
+        "Verifique que el archivo correcto esté en el slot CCI "
+        "(Datos de Cobro / Dispersión CCI, no un archivo CLR/DF)."
     )
 
 

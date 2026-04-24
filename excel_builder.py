@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# CAPUFE – Generación del archivo Excel de conciliación
+# Generación del archivo Excel 
 # ─────────────────────────────────────────────────────────────────────────────
 
 import io
@@ -20,7 +20,6 @@ def _aln(wrap=False): return Alignment(horizontal="center", vertical="center", w
 # ── Hoja CONCILIACION ─────────────────────────────────────────────────────────
 
 def _write_conciliacion(ws, df: pd.DataFrame):
-    # Fila 1: etiquetas de sección (fusionadas)
     bounds = {}
     for ci, (_, _, sec, _) in enumerate(ALL_COLS, 1):
         bounds.setdefault(sec, [ci, ci])
@@ -34,7 +33,6 @@ def _write_conciliacion(ws, df: pd.DataFrame):
         if s != e:
             ws.merge_cells(start_row=1, start_column=s, end_row=1, end_column=e)
 
-    # Fila 2: encabezados
     for ci, (_, label, sec, _) in enumerate(ALL_COLS, 1):
         c = ws.cell(2, ci, label)
         c.font      = _font(True, "000000", 9)
@@ -114,8 +112,7 @@ def _write_conciliacion(ws, df: pd.DataFrame):
                 elif escenario == "Sobrantes de DF y no en CCI, ni en dia anterior o posterior":
                     cell.font = _font(bold=True, color="FF0000")
                     cell.fill = _fill("FFFFFF")
-           
-    # Anchos
+
     for ci, (_, label, _, _) in enumerate(ALL_COLS, 1):
         ws.column_dimensions[get_column_letter(ci)].width = COLUMN_WIDTHS.get(label, DEFAULT_WIDTH)
 
@@ -125,19 +122,108 @@ def _write_conciliacion(ws, df: pd.DataFrame):
 # ── Hoja TARIFAS ──────────────────────────────────────────────────────────────
 
 def _write_tarifas(ws):
-    for ci, txt in enumerate(("CLAVE", "IMPORTE"), 1):
-        c = ws.cell(1, ci, txt)
-        c.font = _font(True, "FFFFFF", 10); c.fill = _fill("1F4E79"); c.alignment = _aln()
+    """
+    Genera la hoja TARIFAS como tabla cruzada:
+      Col A = CLASE, Col B = TRAMO 574, Col C = TRAMO 575, Col D = TRAMO 576
+    Con secciones: Básicas, Larga Estancia (L01-L15), Paso Posterior (P01-P15).
+    """
+    from openpyxl.styles import Border, Side
+    from openpyxl.utils import get_column_letter
 
-    for i, (k, v) in enumerate(TARIFAS.items(), 2):
-        ws.cell(i, 1, k).alignment = _aln(); ws.cell(i, 1).font = _font()
-        ws.cell(i, 2, v).alignment = _aln(); ws.cell(i, 2).font = _font()
-        ws.cell(i, 2).number_format = "#,##0"
-        if i % 2 == 0:
-            ws.cell(i, 1).fill = _fill("DEEAF1"); ws.cell(i, 2).fill = _fill("DEEAF1")
+    TRAMOS = ["574", "575", "576"]
 
-    ws.column_dimensions["A"].width = 16
-    ws.column_dimensions["B"].width = 12
+    # Colores por tramo 
+    TRAMO_HDR_BG  = {"574": "C55A11",  "575": "375623",  "576": "1F4E79"}
+    TRAMO_HDR_FG  = {"574": "FFFFFF",  "575": "FFFFFF",  "576": "FFFFFF"}
+    TRAMO_DATA_BG = {"574": "FCE4D6",  "575": "E2EFDA",  "576": "DEEAF1"}
+
+    # Secciones
+    SECTIONS = [
+        ("Tarifas Básicas", [
+            "T01A","T01M",
+            "T02B","T02C",
+            "T03B","T03C",
+            "T04B","T04C",
+            "T05C","T06C",
+            "T07C","T08C","T09C",
+            "EEL","EEP",
+        ]),
+        ("Larga Estancia (T01L)", [f"T01L{i:02d}A" for i in range(1, 16)]),
+        ("Paso Posterior (T09P)", [f"T09P{i:02d}C" for i in range(1, 16)]),
+    ]
+
+    thin = Side(style="thin", color="BFBFBF")
+    thick = Side(style="medium", color="595959")
+    def border(top=None,bottom=None,left=None,right=None):
+        return Border(top=top,bottom=bottom,left=left,right=right)
+
+    def _set(ws, row, col, val="", bold=False, fg="000000", bg=None,
+             size=9, wrap=False, num_fmt=None, b_top=None, b_bot=None, b_left=None, b_right=None):
+        c = ws.cell(row, col, val)
+        c.font = Font(name="Arial", bold=bold, color=fg, size=size)
+        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=wrap)
+        if bg:
+            c.fill = PatternFill("solid", fgColor=bg)
+        if num_fmt:
+            c.number_format = num_fmt
+        c.border = Border(
+            top=b_top or thin, bottom=b_bot or thin,
+            left=b_left or thin, right=b_right or thin
+        )
+        return c
+
+    ws.merge_cells("A1:D1")
+    c = ws.cell(1, 1, "TARIFAS VIGENTES — PC 0231 · A PARTIR DEL 13/04/2026")
+    c.font      = Font(name="Arial", bold=True, color="FFFFFF", size=12)
+    c.fill      = PatternFill("solid", fgColor="0B3D2E")
+    c.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 26
+
+    _set(ws, 2, 1, "CLASE", bold=True, fg="FFFFFF", bg="2E4057", size=10,
+         b_left=thick, b_top=thick, b_bot=thick)
+    for ci, tramo in enumerate(TRAMOS, 2):
+        _set(ws, 2, ci, f"TRAMO {tramo}", bold=True,
+             fg=TRAMO_HDR_FG[tramo], bg=TRAMO_HDR_BG[tramo], size=10,
+             b_top=thick, b_bot=thick,
+             b_right=thick if ci == 4 else thin)
+    ws.row_dimensions[2].height = 22
+
+    row = 3
+    for sec_title, clases in SECTIONS:
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+        c = ws.cell(row, 1, sec_title)
+        c.font      = Font(name="Arial", bold=True, color="FFFFFF", size=9)
+        c.fill      = PatternFill("solid", fgColor="595959")
+        c.alignment = Alignment(horizontal="left", vertical="center", indent=1)
+        c.border    = Border(top=thick, bottom=thick, left=thick, right=thick)
+        ws.row_dimensions[row].height = 16
+        row += 1
+
+        for idx, clase in enumerate(clases):
+            is_even = idx % 2 == 0
+            row_bg = "F5F5F5" if is_even else "FFFFFF"
+
+            _set(ws, row, 1, clase, bold=False, fg="1a1a1a", bg=row_bg,
+                 b_left=thick, b_right=thin)
+
+            for ci, tramo in enumerate(TRAMOS, 2):
+                key = f"{tramo}{clase}"
+                val = TARIFAS.get(key, "—")
+                is_num = isinstance(val, (int, float))
+                _set(ws, row, ci,
+                     val if is_num else val,
+                     bold=is_num, fg="000000" if is_num else "999999",
+                     bg=TRAMO_DATA_BG[tramo] if is_num else row_bg,
+                     num_fmt="#,##0" if is_num else None,
+                     b_right=thick if ci == 4 else thin)
+            row += 1
+
+    ws.column_dimensions["A"].width = 14
+    ws.column_dimensions["B"].width = 13
+    ws.column_dimensions["C"].width = 13
+    ws.column_dimensions["D"].width = 13
+
+    ws.freeze_panes = "B3"
 
 # ──  ──────────────────────────────────────────────────────────────
 
@@ -197,23 +283,19 @@ def _build_scenarios(df_hoy: pd.DataFrame, merged_ant: pd.DataFrame | None, merg
     return df, ajustes
 
 
-# ── Función pública ───────────────────────────────────────────────────────────
+# ── Función pública
 def generate_excel(df_hoy: pd.DataFrame, merged_ant=None, merged_pos=None) -> io.BytesIO:
     wb = Workbook()
 
-    # ✅ 1) Aquí ahora sí usamos tu función que arma escenarios
     conciliacion, ajustes = _build_scenarios(df_hoy, merged_ant, merged_pos)
 
-    # ✅ 2) Hoja CONCILIACION (pero con "conciliacion", NO con df_hoy)
     ws_main = wb.active
     ws_main.title = "CONCILIACION"
     _write_conciliacion(ws_main, conciliacion)
 
-    # ✅ 3) Hoja AJUSTES (nuevo)
     ws_aj = wb.create_sheet("AJUSTES")
     _write_conciliacion(ws_aj, ajustes)
 
-    # ✅ 4) Hoja TARIFAS (igual)
     ws_tar = wb.create_sheet("TARIFAS")
     _write_tarifas(ws_tar)
 
