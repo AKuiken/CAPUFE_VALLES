@@ -258,17 +258,17 @@ def build_indicators(clr, cci):
     })
     
     mg = clr.merge(
-    cci,
-    left_on="INDICADOR_PISO",
-    right_on="INDICADOR_CCI",
-    how="left",
-    indicator=True   
+        cci,
+        left_on="INDICADOR_PISO",
+        right_on="INDICADOR_CCI",
+        how="outer",
+        indicator=True,
     )
-   # DEBUG (para ver si sí cruza)
+    # DEBUG (para ver si sí cruza)
     print("CLR:", len(clr))
     print("CCI:", len(cci))
     print("MERGE:", len(mg))
-    print("COINCIDENCIAS:", mg["NUMERO_TAG"].notna().sum())
+    print("Categorías _merge:", mg["_merge"].value_counts().to_dict())
 
     # -----------------------------
     # VALIDACIONES

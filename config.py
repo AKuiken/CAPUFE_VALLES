@@ -131,13 +131,40 @@ RESULT_COLS = [
     ("CCI_DIA",     "CCI_DIA",     "RESULTADO", False),
     ("DIF_IMPORTE", "DIF_IMPORTE", "RESULTADO", False),
 ]
-ALL_COLS = RESULT_COLS + DF_COLS + CALC_COLS + CCI_COLS
+
+# Bloque "DF DÍA CONTRARIO": se llena cuando un sobrante de CCI (right_only)
+# se encuentra en el CLR del día anterior o posterior. Espeja DF_COLS + IMPORTE_VALUADO.
+DF_OTRO_COLS = [
+    ("OTRO_Operador Carretero",     "Operador Carretero",   "DF_OTRO", False),
+    ("OTRO_Fecha Base",             "Fecha Base",           "DF_OTRO", False),
+    ("OTRO_Plaza de Cobro",         "Plaza de Cobro",       "DF_OTRO", False),
+    ("OTRO_Numero de Transaccion",  "Num. Transaccion",     "DF_OTRO", False),
+    ("OTRO_Estado Transaccion",     "Estado Transaccion",   "DF_OTRO", False),
+    ("OTRO_Descripcion",            "Descripcion",          "DF_OTRO", False),
+    ("OTRO_Fecha Transaccion",      "Fecha Transaccion",    "DF_OTRO", False),
+    ("OTRO_Hora Transaccion",       "Hora Transaccion",     "DF_OTRO", False),
+    ("OTRO_Numero Tarjeta",         "Numero Tarjeta",       "DF_OTRO", False),
+    ("OTRO_Estado Tarjeta",         "Estado Tarjeta",       "DF_OTRO", False),
+    ("OTRO_Carril",                 "Carril",               "DF_OTRO", False),
+    ("OTRO_Evento",                 "Evento",               "DF_OTRO", False),
+    ("OTRO_Clase",                  "Clase",                "DF_OTRO", False),
+    ("OTRO_Tipo",                   "Tipo",                 "DF_OTRO", False),
+    ("OTRO_Tramo",                  "Tramo",                "DF_OTRO", False),
+    ("OTRO_Forma de pago Capufe",   "Forma de pago Capufe", "DF_OTRO", False),
+    ("OTRO_CONVERSION_HORA",        "CONVERSION_HORA",      "DF_OTRO", True),
+    ("OTRO_INDICADOR_PISO",         "INDICADOR_ PISO\n(TAG&EVENTO&HORA)", "DF_OTRO", True),
+    ("OTRO_INDICADOR_TARIFA",       "INDICADOR_ TARIFA\n(TRAMO&CLASE&TIPO)", "DF_OTRO", True),
+    ("OTRO_IMPORTE_VALUADO",        "IMPORTE_VALUADO",      "DF_OTRO", True),
+]
+
+ALL_COLS = RESULT_COLS + DF_COLS + CALC_COLS + CCI_COLS + DF_OTRO_COLS
 
 SECTION_COLORS = {
     "RESULTADO": {"hbg": "0B3D2E", "hfg": "FFFFFF", "dbg": "E8F5E9"},
     "DF":        {"hbg": "1F4E79", "hfg": "FFFFFF", "dbg": "DEEAF1"},
     "VALUACION": {"hbg": "7B3F00", "hfg": "FFFFFF", "dbg": "FCE4D6"},
     "CCI":       {"hbg": "1E4620", "hfg": "FFFFFF", "dbg": "E2EFDA"},
+    "DF_OTRO":   {"hbg": "5B2C6F", "hfg": "FFFFFF", "dbg": "EBDEF0"},
 }
 
 COLUMN_WIDTHS = {
